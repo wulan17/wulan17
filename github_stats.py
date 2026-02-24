@@ -4,8 +4,7 @@ import asyncio
 import os
 from typing import Dict, List, Optional, Set, Tuple, Any, cast
 
-import aiohttp
-import requests
+import niquests
 
 
 ###############################################################################
@@ -23,7 +22,7 @@ class Queries(object):
         self,
         username: str,
         access_token: str,
-        session: aiohttp.ClientSession,
+        session: niquests.AsyncSession,
         max_connections: int = 10,
     ):
         self.username = username
@@ -48,14 +47,14 @@ class Queries(object):
                     headers=headers,
                     json={"query": generated_query},
                 )
-            result = await r_async.json()
+            result = r_async.json()
             if result is not None:
                 return result
         except:
-            print("aiohttp failed for GraphQL query")
+            print("niquests failed for GraphQL query")
             # Fall back on non-async requests
             async with self.semaphore:
-                r_requests = requests.post(
+                r_requests = niquests.post(
                     "https://api.github.com/graphql",
                     headers=headers,
                     json={"query": generated_query},
@@ -88,20 +87,20 @@ class Queries(object):
                         headers=headers,
                         params=tuple(params.items()),
                     )
-                if r_async.status == 202:
+                if r_async.status_code == 202:
                     # print(f"{path} returned 202. Retrying...")
                     print(f"A path returned 202. Retrying...")
                     await asyncio.sleep(2)
                     continue
 
-                result = await r_async.json()
+                result = r_async.json()
                 if result is not None:
                     return result
             except:
-                print("aiohttp failed for rest query")
+                print("niquests failed for rest query")
                 # Fall back on non-async requests
                 async with self.semaphore:
-                    r_requests = requests.get(
+                    r_requests = niquests.get(
                         f"https://api.github.com/{path}",
                         headers=headers,
                         params=tuple(params.items()),
@@ -254,7 +253,7 @@ class Stats(object):
         self,
         username: str,
         access_token: str,
-        session: aiohttp.ClientSession,
+        session: niquests.AsyncSession,
         exclude_repos: Optional[Set] = None,
         exclude_langs: Optional[Set] = None,
         ignore_forked_repos: bool = False,
@@ -536,7 +535,7 @@ async def main() -> None:
         raise RuntimeError(
             "ACCESS_TOKEN and GITHUB_ACTOR environment variables cannot be None!"
         )
-    async with aiohttp.ClientSession() as session:
+    async with niquests.AsyncSession() as session:
         s = Stats(user, access_token, session)
         print(await s.to_str())
 

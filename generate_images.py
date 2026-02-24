@@ -4,7 +4,7 @@ import asyncio
 import os
 import re
 
-import aiohttp
+import niquests
 
 from github_stats import Stats
 
@@ -120,7 +120,7 @@ async def main() -> None:
         not not raw_ignore_forked_repos
         and raw_ignore_forked_repos.strip().lower() != "false"
     )
-    async with aiohttp.ClientSession() as session:
+    async with niquests.AsyncSession() as session:
         s = Stats(
             user,
             access_token,
